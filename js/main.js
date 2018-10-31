@@ -29,6 +29,8 @@ var gunmaIndexY = 0;
 var goalIndexX = 0;
 var goalIndexY = 0;
 
+var comList = new Array();
+
 enchant();
 
 var moveCheck = function (x, y, moveX, moveY) {
@@ -122,6 +124,12 @@ window.onload = function () {
             scene.addChild(label);
 
 
+            var comArrow = new Label("");
+            comArrow.font = '20px sans-serif';
+            comArrow.x = 0;
+            comArrow.y = winHeight - 25;
+            scene.addChild(comArrow);
+
             for (var indexY = 0; indexY < stageHeight; indexY++) {//stage
                 for (var indexX = 0; indexX < stageWidth; indexX++) {
 
@@ -159,30 +167,6 @@ window.onload = function () {
             var gunmaSpeedX = 0;
             var gunmaSpeedY = 0;
 
-            scene.addEventListener(Event.ENTER_FRAME, function () {
-                if (gunmaSpeedX != 0) {
-                    var moveX = gunmaSpeedX / Math.abs(gunmaSpeedX);
-                    if (moveGunma(gunmaIndexX, gunmaIndexY, moveX, 0)) {
-                        gunma.x += gunmaSpeedX;
-                        gunmaIndexX += moveX;
-                        score++;
-                        label.text = '移動回数： ' + score + '回';
-                    }
-
-                } else if (gunmaSpeedY != 0) {
-                    var moveY = gunmaSpeedY / Math.abs(gunmaSpeedY);
-                    if (moveGunma(gunmaIndexX, gunmaIndexY, 0, moveY)) {
-                        gunma.y += gunmaSpeedY;
-                        gunmaIndexY += moveY;
-                        score++;
-                        label.text = '移動回数： ' + score + '回';
-                    }
-                }
-                gunmaSpeedX = 0;
-                gunmaSpeedY = 0;
-                if (gunmaIndexX == goalIndexX && gunmaIndexY == goalIndexY) game_.replaceScene(createGameoverScene(score));
-            });
-
             var arrow = new Array();
 
             for (var index = 0; index < 4; index++) {
@@ -197,6 +181,52 @@ window.onload = function () {
                 scene.addChild(arrow[index]);
                 arrow[index].addEventListener('touchstart', function () {
                     var index = Math.round((this.x - outStageWidth / 2) / stagePanelWidth);
+                    var indexChar = ['←', '↑', '→', '↓'];
+                    comArrow.text = comArrow.text + indexChar[index];
+                    comList.push(index);
+                }, false);
+
+            }
+
+            var backArrow = new Sprite(panelImageWidth, panelImageHeight);
+            backArrow.image = game_.assets['./img/arrow.png'];
+            backArrow.x = 0
+            backArrow.y = 0;
+            backArrow.frame = 0;
+            backArrow.scale(1, 1);
+
+            scene.addChild(backArrow);
+            backArrow.addEventListener('touchstart', function () {
+                stageAry = JSON.parse(JSON.stringify(orgStage));
+                for (var indexY = 0; indexY < stageHeight; indexY++) {//stage
+                    for (var indexX = 0; indexX < stageWidth; indexX++) {
+
+                        var index = indexX + indexY * stageHeight;
+                        stagePanel[index].frame = stageAry[indexY][indexX];
+                        if (stageAry[indexY][indexX] == 4) {
+                            gunmaIndexX = indexX;
+                            gunmaIndexY = indexY;
+                            gunma.x = outStageWidth / 2 + gunmaIndexX * stagePanelWidth;
+                            gunma.y = outStageHeight + gunmaIndexY * stagePanelHeight;
+                        }
+
+                    }
+                }
+
+            }, false);
+
+            var goButton = new Sprite(panelImageWidth, panelImageHeight);
+            goButton.image = game_.assets['./img/testImg.png'];
+            goButton.x = 0;
+            goButton.y = 50;
+            goButton.frame = 0;
+            goButton.scale(1, 1);
+
+            scene.addChild(goButton);
+            goButton.addEventListener('touchstart', function () {
+
+                for (var i = 0; i < comList.length; i++) {
+                    var index = comList[i];
                     if (gunmaSpeedX == 0 && gunmaSpeedY == 0) {
                         if (index % 2 == 0) {
                             gunmaSpeedX = stagePanelWidth;
@@ -206,11 +236,31 @@ window.onload = function () {
                             if (index == 1) gunmaSpeedY *= -1;
                         }
                     }
-                }, false);
+                    if (gunmaSpeedX != 0) {
+                        var moveX = gunmaSpeedX / Math.abs(gunmaSpeedX);
+                        if (moveGunma(gunmaIndexX, gunmaIndexY, moveX, 0)) {
+                            gunma.x += gunmaSpeedX;
+                            gunmaIndexX += moveX;
+                            score++;
+                            label.text = '移動回数： ' + score + '回';
+                        }
 
-            }
+                    } else if (gunmaSpeedY != 0) {
+                        var moveY = gunmaSpeedY / Math.abs(gunmaSpeedY);
+                        if (moveGunma(gunmaIndexX, gunmaIndexY, 0, moveY)) {
+                            gunma.y += gunmaSpeedY;
+                            gunmaIndexY += moveY;
+                            score++;
+                            label.text = '移動回数： ' + score + '回';
+                        }
+                    }
+                    gunmaSpeedX = 0;
+                    gunmaSpeedY = 0;
+                    if (gunmaIndexX == goalIndexX && gunmaIndexY == goalIndexY) game_.replaceScene(createGameoverScene(score));
 
+                }
 
+            }, false);
 
 
             return scene;
