@@ -301,6 +301,5 @@ window.onload = function () {
         game_.replaceScene(createStartScene());
     }
 
-
     game_.start();
 };
