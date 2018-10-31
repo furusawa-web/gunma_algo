@@ -190,7 +190,6 @@ window.onload = function() {
                         if(gunmaSpeedX == 0 && gunmaSpeedY == 0){
                             if(index % 2 == 0){
                                 gunmaSpeedX = stagePanelWidth;
-                                alert('testtest');
                                 if(index == 0) gunmaSpeedX *= -1;
                             }else{
                                 gunmaSpeedY = stagePanelHeight;
