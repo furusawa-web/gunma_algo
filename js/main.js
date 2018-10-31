@@ -196,7 +196,7 @@ window.onload = function () {
 
                 scene.addChild(arrow[index]);
                 arrow[index].addEventListener('touchstart', function () {
-                    var index = Math.round((this.x - outStageWidth / 2) / stagePanelWidth);
+                    var index = (this.x - outStageWidth / 2) / stagePanelWidth;
                     if (gunmaSpeedX == 0 && gunmaSpeedY == 0) {
                         if (index % 2 == 0) {
                             gunmaSpeedX = stagePanelWidth;
