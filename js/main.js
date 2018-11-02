@@ -69,6 +69,15 @@ var updateStage = function (x, y) {
     stagePanel[index].frame = stageAry[y][x];
 }
 
+function sleep(a) {
+    var dt1 = new Date().getTime();
+    var dt2 = new Date().getTime();
+    while (dt2 < dt1 + a) {
+        dt2 = new Date().getTime();
+    }
+    return;
+}
+
 window.onload = function () {
     var game_ = new Game(winWidth, winHeight);
     game_.fps = 24;
@@ -99,17 +108,52 @@ window.onload = function () {
 
             var subTitle = new Label('- アルゴリズムを学ぼう -');
             subTitle.textAlign = 'center';
-            title.x = 0;
+            subTitle.x = 0;
             subTitle.y = 196;
             subTitle.font = '14px sans-serif';
             scene.addChild(subTitle);
 
             startImage.addEventListener(Event.TOUCH_START, function (e) {
-                game_.replaceScene(createGameScene());
+                game_.replaceScene(createSelectScene());
             });
 
             return scene;
         };
+
+        /**
+         * select scene
+        */
+        var createSelectScene = function () {
+            stageAry = JSON.parse(JSON.stringify(orgStage));
+            var scene = new Scene();
+            scene.backgroundColor = '#fcc800';
+
+            var selectName = ["群馬県庁", "赤城山", "浅間山", "榛名山", "妙義山", "富岡製糸場"];
+
+
+            var selectStage = new Array();
+
+            for (var index = 0; index < 6; index++) {
+
+                selectStage[index] = new Label(selectName[index]);
+                selectStage[index].textAlign = 'center';
+                selectStage[index].x = 0;
+                selectStage[index].y = 20 + 22 * index;
+                selectStage[index].font = '20px sans-serif';
+
+                scene.addChild(selectStage[index]);
+                selectStage[index].addEventListener('touchstart', function () {
+                    //add read mat
+                    game_.replaceScene(createGameScene());
+                }, false);
+
+            }
+
+            return scene;
+        };
+
+
+
         /**
         * game Scene
         */
@@ -126,8 +170,9 @@ window.onload = function () {
 
             var comArrow = new Label("");
             comArrow.font = '20px sans-serif';
-            comArrow.x = 0;
-            comArrow.y = winHeight - 25;
+            comArrow.x = winWidth - 25;
+            comArrow.y = 0;
+            comArrow.width = 25;
             scene.addChild(comArrow);
 
             for (var indexY = 0; indexY < stageHeight; indexY++) {//stage
@@ -182,7 +227,7 @@ window.onload = function () {
                 arrow[index].addEventListener('touchstart', function () {
                     var index = Math.round((this.x - outStageWidth / 2) / stagePanelWidth);
                     var indexChar = ['←', '↑', '→', '↓'];
-                    comArrow.text = comArrow.text + indexChar[index];
+                    comArrow.text = comArrow.text + indexChar[index] + '<br>';
                     comList.push(index);
                 }, false);
 
@@ -219,7 +264,7 @@ window.onload = function () {
             goButton.image = game_.assets['./img/testImg.png'];
             goButton.x = 0;
             goButton.y = 50;
-            goButton.frame = 0;
+            goButton.frame = 4;
             goButton.scale(1, 1);
 
             scene.addChild(goButton);
@@ -256,10 +301,14 @@ window.onload = function () {
                     }
                     gunmaSpeedX = 0;
                     gunmaSpeedY = 0;
+
+                    //sleep(1000); //must change
+
                     if (gunmaIndexX == goalIndexX && gunmaIndexY == goalIndexY) game_.replaceScene(createGameoverScene(score));
 
                 }
-
+                comList.length = 0;
+                comArrow.text = "";
             }, false);
 
 
@@ -300,6 +349,7 @@ window.onload = function () {
         };
         game_.replaceScene(createStartScene());
     }
+
 
     game_.start();
 };
