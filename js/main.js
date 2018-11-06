@@ -163,9 +163,62 @@ window.onload = function () {
 
             var score = 0;
 
+            var goFlg = false;
+
+
+            scene.addEventListener(Event.ENTER_FRAME, function () {
+                if (goFlg) {
+
+                    if (gunmaIndexX == goalIndexX && gunmaIndexY == goalIndexY) {
+                        comList.length = 0;
+                        comArrow.text = "";
+                        goflg = false;
+                        game_.replaceScene(createGameoverScene(score));
+                    }
+                    if (comList.length == 0) {
+                        goFlg = false;
+                    } else {
+                        var i = 0;
+                        var index = comList[i];
+                        var gunmaSpeedX = 0;
+                        var gunmaSpeedY = 0;
+                        if (index % 2 == 0) {
+                            gunmaSpeedX = stagePanelWidth;
+                            if (index == 0) gunmaSpeedX *= -1;
+                        } else {
+                            gunmaSpeedY = stagePanelHeight;
+                            if (index == 1) gunmaSpeedY *= -1;
+                        }
+
+                        var moveX = 0;
+                        var moveY = 0;
+
+                        if (gunmaSpeedX != 0) {
+                            moveX = gunmaSpeedX / Math.abs(gunmaSpeedX);
+                        } else if (gunmaSpeedY != 0) {
+                            moveY = gunmaSpeedY / Math.abs(gunmaSpeedY);
+                        }
+
+                        if (moveGunma(gunmaIndexX, gunmaIndexY, moveX, moveY)) {
+                            gunma.x += gunmaSpeedX;
+                            gunmaIndexX += moveX;
+                            gunma.y += gunmaSpeedY;
+                            gunmaIndexY += moveY;
+                            score++;
+                            label.text = '移動回数： ' + score + '回';
+                        }
+                        comArrow.text = comArrow.text.slice(5);
+                        comList.shift();
+                        sleep(200); //must change
+                    }
+                }
+            });
+
+
             var label = new Label('移動回数： ' + score + '回');
             label.font = '14px sans-serif';
             scene.addChild(label);
+
 
 
             var comArrow = new Label("");
@@ -209,8 +262,7 @@ window.onload = function () {
             gunma.scale(stagePanelWidth / panelImageWidth, stagePanelHeight / panelImageHeight);
 
             scene.addChild(gunma);
-            var gunmaSpeedX = 0;
-            var gunmaSpeedY = 0;
+
 
             var arrow = new Array();
 
@@ -225,10 +277,12 @@ window.onload = function () {
 
                 scene.addChild(arrow[index]);
                 arrow[index].addEventListener('touchstart', function () {
-                    var index = Math.round((this.x - outStageWidth / 2) / stagePanelWidth);
-                    var indexChar = ['←', '↑', '→', '↓'];
-                    comArrow.text = comArrow.text + indexChar[index] + '<br>';
-                    comList.push(index);
+                    if (!goFlg) {
+                        var index = Math.round((this.x - outStageWidth / 2) / stagePanelWidth);
+                        var indexChar = ['←', '↑', '→', '↓'];
+                        comArrow.text = comArrow.text + indexChar[index] + '<br>';
+                        comList.push(index);
+                    }
                 }, false);
 
             }
@@ -242,22 +296,23 @@ window.onload = function () {
 
             scene.addChild(backArrow);
             backArrow.addEventListener('touchstart', function () {
-                stageAry = JSON.parse(JSON.stringify(orgStage));
-                for (var indexY = 0; indexY < stageHeight; indexY++) {//stage
-                    for (var indexX = 0; indexX < stageWidth; indexX++) {
+                if (!goFlg) {
+                    stageAry = JSON.parse(JSON.stringify(orgStage));
+                    for (var indexY = 0; indexY < stageHeight; indexY++) {//stage
+                        for (var indexX = 0; indexX < stageWidth; indexX++) {
 
-                        var index = indexX + indexY * stageHeight;
-                        stagePanel[index].frame = stageAry[indexY][indexX];
-                        if (stageAry[indexY][indexX] == 4) {
-                            gunmaIndexX = indexX;
-                            gunmaIndexY = indexY;
-                            gunma.x = outStageWidth / 2 + gunmaIndexX * stagePanelWidth;
-                            gunma.y = outStageHeight + gunmaIndexY * stagePanelHeight;
+                            var index = indexX + indexY * stageHeight;
+                            stagePanel[index].frame = stageAry[indexY][indexX];
+                            if (stageAry[indexY][indexX] == 4) {
+                                gunmaIndexX = indexX;
+                                gunmaIndexY = indexY;
+                                gunma.x = outStageWidth / 2 + gunmaIndexX * stagePanelWidth;
+                                gunma.y = outStageHeight + gunmaIndexY * stagePanelHeight;
+                            }
+
                         }
-
                     }
                 }
-
             }, false);
 
             var goButton = new Sprite(panelImageWidth, panelImageHeight);
@@ -269,48 +324,8 @@ window.onload = function () {
 
             scene.addChild(goButton);
             goButton.addEventListener('touchstart', function () {
-
-                for (var i = 0; i < comList.length; i++) {
-                    var index = comList[i];
-                    if (gunmaSpeedX == 0 && gunmaSpeedY == 0) {
-                        if (index % 2 == 0) {
-                            gunmaSpeedX = stagePanelWidth;
-                            if (index == 0) gunmaSpeedX *= -1;
-                        } else {
-                            gunmaSpeedY = stagePanelHeight;
-                            if (index == 1) gunmaSpeedY *= -1;
-                        }
-                    }
-                    if (gunmaSpeedX != 0) {
-                        var moveX = gunmaSpeedX / Math.abs(gunmaSpeedX);
-                        if (moveGunma(gunmaIndexX, gunmaIndexY, moveX, 0)) {
-                            gunma.x += gunmaSpeedX;
-                            gunmaIndexX += moveX;
-                            score++;
-                            label.text = '移動回数： ' + score + '回';
-                        }
-
-                    } else if (gunmaSpeedY != 0) {
-                        var moveY = gunmaSpeedY / Math.abs(gunmaSpeedY);
-                        if (moveGunma(gunmaIndexX, gunmaIndexY, 0, moveY)) {
-                            gunma.y += gunmaSpeedY;
-                            gunmaIndexY += moveY;
-                            score++;
-                            label.text = '移動回数： ' + score + '回';
-                        }
-                    }
-                    gunmaSpeedX = 0;
-                    gunmaSpeedY = 0;
-
-                    //sleep(1000); //must change
-
-                    if (gunmaIndexX == goalIndexX && gunmaIndexY == goalIndexY) game_.replaceScene(createGameoverScene(score));
-
-                }
-                comList.length = 0;
-                comArrow.text = "";
+                goFlg = true;
             }, false);
-
 
             return scene;
         };
