@@ -1,21 +1,63 @@
 
 var stageAry = [
+    [0, 0, 1, 6],
     [0, 0, 1, 5],
-    [0, 0, 3, 3],
-    [0, 2, 0, 0],
+    [0, 2, 3, 3],
     [4, 0, 0, 0]
 ];
+
+var selectName = ["群馬県庁", "赤城山", "浅間山", "榛名山", "妙義山", "富岡製糸場"];
+
+
+
+var stageStartPanel = 4;
+var stageGoalPanel = 5;
+var stageRockPanel = 2;
+var stageHolePanel = 1;
+var stageWallPanel = 3;
+var stageFloorPanel = 0;
 
 var orgStage = JSON.parse(JSON.stringify(stageAry));
 
 var winWidth = window.innerWidth;
 var winHeight = window.innerHeight;
 
+//----------------
 var stageRangeWidth = Math.min(winWidth, winHeight) * 0.7;
 var stageRangeHeight = stageRangeWidth;
 
 var outStageWidth = winWidth - stageRangeWidth;
 var outStageHeight = 50;
+
+var startScene_backgroundColor = '#fcc800';
+
+var startImage_sizeX = 236;
+var startImage_sizeY = 48;
+var startImage_posX = 42;
+var startImage_posY = 136;
+
+var title_text = 'ぐんまちゃん';
+var title_textAlign = 'center';
+var title_color = '#ffffff';
+var title_posX = 0;
+var title_posY = 96;
+var title_font = '28px sans-serif';
+
+var subTitle_text = '- アルゴリズムを学ぼう -';
+var subTitle_textAlign = 'center';
+var subTitle_posX = 0;
+var subTitle_posY = 196;
+var subTitle_font = '14px sans-serif';
+
+
+var selectScene_backgroundColor = '#fcc800';
+var selectStage_textAlign = 'center';
+var selectStage_color = '#ffffff';
+var selectStage_posX = 0;
+var selectStage_lineSpacing = 22; //fontsize + lineSpacing
+var selectStage_font = '20px sans-serif';
+var selectStage_marginTop = 20;
+
 
 var stageWidth = 4;
 var stageHeight = 4;
@@ -23,11 +65,14 @@ var stagePanelWidth = stageRangeWidth / stageWidth;
 var stagePanelHeight = stageRangeHeight / stageHeight;
 var panelImageWidth = 48;
 var panelImageHeight = 48;
+
+//-----------------------
+
 var stagePanel = new Array();
 var gunmaIndexX = 0;
 var gunmaIndexY = 0;
-var goalIndexX = 0;
-var goalIndexY = 0;
+
+
 
 var comList = new Array();
 
@@ -36,12 +81,12 @@ enchant();
 var moveCheck = function (x, y, moveX, moveY) {
     if (y + moveY < 0 || x + moveX < 0) return false;
     if (y + moveY >= stageHeight || x + moveX >= stageWidth) return false;
-    if (stageAry[y + moveY][x + moveX] == 1 || stageAry[y + moveY][x + moveX] == 3) {
+    if (stageAry[y + moveY][x + moveX] == stageHolePanel || stageAry[y + moveY][x + moveX] == stageWallPanel) {
         return false;
-    } else if (stageAry[y + moveY][x + moveX] == 2) {
+    } else if (stageAry[y + moveY][x + moveX] == stageRockPanel) {
         if (y + moveY * 2 < 0 || x + moveX * 2 < 0) return false;
         if (y + moveY * 2 >= stageHeight || x + moveX * 2 >= stageWidth) return false;
-        if (stageAry[y + moveY * 2][x + moveX * 2] == 2 || stageAry[y + moveY * 2][x + moveX * 2] == 3) {
+        if (stageAry[y + moveY * 2][x + moveX * 2] == stageRockPanel || stageAry[y + moveY * 2][x + moveX * 2] == stageWallPanel) {
             return false;
         }
     }
@@ -50,15 +95,16 @@ var moveCheck = function (x, y, moveX, moveY) {
 
 var moveGunma = function (x, y, moveX, moveY) {
     if (!moveCheck(x, y, moveX, moveY)) return false;
-    if (stageAry[y + moveY][x + moveX] == 2) {
-        if (stageAry[y + moveY * 2][x + moveX * 2] == 1) {
-            stageAry[y + moveY * 2][x + moveX * 2] = 0;
+    if (stageAry[y + moveY][x + moveX] >= stageGoalPanel) return true;
+    if (stageAry[y + moveY][x + moveX] == stageRockPanel) {
+        if (stageAry[y + moveY * 2][x + moveX * 2] == stageHolePanel) {
+            stageAry[y + moveY * 2][x + moveX * 2] = stageFloorPanel;
         } else {
-            stageAry[y + moveY * 2][x + moveX * 2] = 2;
+            stageAry[y + moveY * 2][x + moveX * 2] = stageRockPanel;
         }
         updateStage(x + moveX * 2, y + moveY * 2);
     }
-    stageAry[y + moveY][x + moveX] = 0;
+    stageAry[y + moveY][x + moveX] = stageFloorPanel;
     updateStage(x + moveX, y + moveY);
     return true;
 }
@@ -82,7 +128,7 @@ window.onload = function () {
     var game_ = new Game(winWidth, winHeight);
     game_.fps = 24;
 
-    game_.preload('./img/arrow.png', './img/testImg.png', './img/chara1.png', './img/chara3.png', './img/map1.png', './img/start.png', './img/clear.png');
+    game_.preload('./img/arrow.png', './img/stagePanel.png', './img/gunma.png', './img/start.png', './img/clear.png');
     game_.onload = function () {
         /**
         * start scene
@@ -90,27 +136,27 @@ window.onload = function () {
         var createStartScene = function () {
             stageAry = JSON.parse(JSON.stringify(orgStage));
             var scene = new Scene();
-            scene.backgroundColor = '#fcc800';
+            scene.backgroundColor = startScene_backgroundColor;
 
-            var startImage = new Sprite(236, 48);
+            var startImage = new Sprite(startImage_sizeX, startImage_sizeY);
             startImage.image = game_.assets['./img/start.png'];
-            startImage.x = 42;
-            startImage.y = 136;
+            startImage.x = startImage_posX;
+            startImage.y = startImage_posY;
             scene.addChild(startImage);
 
-            var title = new Label('ぐんまちゃん');
-            title.textAlign = 'center';
-            title.color = '#ffffff';
-            title.x = 0;
-            title.y = 96;
-            title.font = '28px sans-serif';
+            var title = new Label(title_text);
+            title.textAlign = title_textAlign;
+            title.color = title_color;
+            title.x = title_posX;
+            title.y = title_posY;
+            title.font = title_font;
             scene.addChild(title);
 
-            var subTitle = new Label('- アルゴリズムを学ぼう -');
-            subTitle.textAlign = 'center';
-            subTitle.x = 0;
-            subTitle.y = 196;
-            subTitle.font = '14px sans-serif';
+            var subTitle = new Label(subTitle_text);
+            subTitle.textAlign = subTitle_textAlign;
+            subTitle.x = subTitle_posX;
+            subTitle.y = subTitle_posY;
+            subTitle.font = subTitle_font;
             scene.addChild(subTitle);
 
             startImage.addEventListener(Event.TOUCH_START, function (e) {
@@ -126,20 +172,18 @@ window.onload = function () {
         var createSelectScene = function () {
             stageAry = JSON.parse(JSON.stringify(orgStage));
             var scene = new Scene();
-            scene.backgroundColor = '#fcc800';
-
-            var selectName = ["群馬県庁", "赤城山", "浅間山", "榛名山", "妙義山", "富岡製糸場"];
-
-
+            scene.backgroundColor = selectScene_backgroundColor;
             var selectStage = new Array();
 
             for (var index = 0; index < 6; index++) {
 
                 selectStage[index] = new Label(selectName[index]);
-                selectStage[index].textAlign = 'center';
-                selectStage[index].x = 0;
-                selectStage[index].y = 20 + 22 * index;
-                selectStage[index].font = '20px sans-serif';
+                selectStage[index].textAlign = selectStage_textAlign;
+
+                selectStage[index].color = selectStage_color;
+                selectStage[index].x = selectStage_posX;
+                selectStage[index].y = selectStage_marginTop + selectStage_lineSpacing * index;
+                selectStage[index].font = selectStage_font;
 
                 scene.addChild(selectStage[index]);
                 selectStage[index].addEventListener('touchstart', function () {
@@ -165,11 +209,14 @@ window.onload = function () {
 
             var goFlg = false;
 
-
+            var frameCount = 0;
             scene.addEventListener(Event.ENTER_FRAME, function () {
+                if (++frameCount >= 12) {
+                    gunma.frame = Math.abs(gunma.frame - 1);
+                    frameCount = 0;
+                }
                 if (goFlg) {
-
-                    if (gunmaIndexX == goalIndexX && gunmaIndexY == goalIndexY) {
+                    if (stageAry[gunmaIndexY][gunmaIndexX] >= stageGoalPanel) {
                         comList.length = 0;
                         comArrow.text = "";
                         goflg = false;
@@ -209,7 +256,7 @@ window.onload = function () {
                         }
                         comArrow.text = comArrow.text.slice(5);
                         comList.shift();
-                        sleep(200); //must change
+                        sleep(500); //must change
                     }
                 }
             });
@@ -234,7 +281,7 @@ window.onload = function () {
                     var index = indexX + indexY * stageHeight;
 
                     stagePanel[index] = new Sprite(panelImageWidth, panelImageHeight);
-                    stagePanel[index].image = game_.assets['./img/testImg.png'];
+                    stagePanel[index].image = game_.assets['./img/stagePanel.png'];
                     stagePanel[index].frame = stageAry[indexY][indexX];
                     stagePanel[index].x = outStageWidth / 2 + indexX * stagePanelWidth;
                     stagePanel[index].y = outStageHeight + indexY * stagePanelHeight;
@@ -244,9 +291,6 @@ window.onload = function () {
                     if (stageAry[indexY][indexX] == 4) {
                         gunmaIndexX = indexX;
                         gunmaIndexY = indexY;
-                    } else if (stageAry[indexY][indexX] == 5) {
-                        goalIndexX = indexX;
-                        goalIndexY = indexY;
                     }
 
                     scene.addChild(stagePanel[index]);
@@ -255,11 +299,11 @@ window.onload = function () {
 
 
             var gunma = new Sprite(panelImageWidth, panelImageHeight);
-            gunma.image = game_.assets['./img/testImg.png'];
+            gunma.image = game_.assets['./img/gunma.png'];
+            gunma.scale(stagePanelWidth / panelImageWidth, stagePanelHeight / panelImageHeight);
             gunma.x = outStageWidth / 2 + gunmaIndexX * stagePanelWidth;
             gunma.y = outStageHeight + gunmaIndexY * stagePanelHeight;
-            gunma.frame = 6;
-            gunma.scale(stagePanelWidth / panelImageWidth, stagePanelHeight / panelImageHeight);
+            gunma.frame = 0;
 
             scene.addChild(gunma);
 
@@ -316,7 +360,7 @@ window.onload = function () {
             }, false);
 
             var goButton = new Sprite(panelImageWidth, panelImageHeight);
-            goButton.image = game_.assets['./img/testImg.png'];
+            goButton.image = game_.assets['./img/stagePanel.png'];
             goButton.x = 0;
             goButton.y = 50;
             goButton.frame = 4;
